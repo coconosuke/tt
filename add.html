@@ -9,11 +9,18 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="トライアド">
-<link rel="manifest" href="manifest.webmanifest?v=6788139fb9">
-<script>/* opened from the Home Screen: straight on to the game */
-if (navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches) location.replace('./');</script>
+<link rel="manifest" href="manifest.webmanifest?v=c438e6b794">
+<script>/* opened from the Home Screen: the game is loaded right here, in place. Going on to its own address would leave the
+   app's scope (an app added without a manifest is scoped to this page), and iOS would show a browser bar round it */
+(function () {
+  if (!(navigator.standalone === true || matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches)) return;
+  document.documentElement.className = 'go';
+  fetch('./', { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then(function (t) { document.open(); document.write(t); document.close(); }, function () { location.replace('./'); });
+})();</script>
 <style>
 :root{color-scheme:dark}
+.go body{visibility:hidden}
 html,body{margin:0;min-height:100%;background:#0a0807;color:#efe6d2;font:15px/1.65 'Hiragino Kaku Gothic ProN','Noto Sans JP',system-ui,sans-serif}
 main{max-width:30rem;margin:0 auto;padding:calc(28px + env(safe-area-inset-top,0px)) 20px calc(28px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;align-items:center;gap:12px;text-align:center}
 .ic{width:96px;height:96px;border-radius:22px;box-shadow:0 0 0 1px #4b3b27,0 8px 24px rgba(0,0,0,.6)}

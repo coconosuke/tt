@@ -1,6 +1,6 @@
 /* Triad Tactics — offline cache. The page itself is fetched fresh when online and served from the cache when not. */
-const C = 'tt2-6788139fb9';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest?v=6788139fb9'];
+const C = 'tt2-c438e6b794';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest?v=c438e6b794'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.indexOf('tt2-') === 0 && k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
@@ -11,8 +11,8 @@ self.addEventListener('fetch', e => {
   /* only the game's own page is kept as 'index.html'; another page (the iPhone's add-to-Home-Screen page) is kept as itself */
   const main = own && /(\/|index\.html)$/.test(u.pathname);
   if (r.mode === 'navigate' || main) {
-    const key = main ? 'index.html' : r;
-    e.respondWith(fetch(r).then(res => { if (res.ok) { const cp = res.clone(); caches.open(C).then(c => c.put(key, cp)); } return res; }).catch(() => caches.match(key).then(m => m || caches.match('index.html')).then(m => m || caches.match('./'))));
+    const key = main ? 'index.html' : r, q = own ? new Request(r.url, { cache: 'no-cache', credentials: 'same-origin' }) : r;     // asked of the server each time (an unchanged page costs a 304)
+    e.respondWith(fetch(q).then(res => { if (res.ok) { const cp = res.clone(); caches.open(C).then(c => c.put(key, cp)); } return res; }).catch(() => caches.match(key).then(m => m || caches.match('index.html')).then(m => m || caches.match('./'))));
     return;
   }
   if (own || /fonts\.(googleapis|gstatic)\.com$/.test(u.hostname)) {
