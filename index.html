@@ -10,12 +10,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="トライアド">
-<script>/* the manifest is for Android and other browsers. An iPhone or iPad chooses its Home Screen icon from a linked manifest and,
-   when that choice fails, draws a letter instead - without one it takes the apple-touch-icon below, which it always reads */
+<script>/* the manifest is for Android and other browsers; an iPhone or iPad is kept on the one long-standing path, the
+   apple-touch-icon below: a plain 180 px opaque PNG under its usual name, beside the page */
 (function () { var n = navigator, apple = /iP(hone|ad|od)/.test(n.userAgent) || (n.platform === "MacIntel" && n.maxTouchPoints > 1); if (apple) return;
-  var l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest?v=46ae149a4c"; document.head.appendChild(l); })();</script>
-<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png?v=46ae149a4c">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=46ae149a4c">
+  var l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest?v=8bd83d0780"; document.head.appendChild(l); })();</script>
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=8bd83d0780">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap">
 <style>
 :root{color-scheme:dark}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}
@@ -52,10 +52,19 @@ h1,h2,h3,h4{font-family:var(--f-head);font-weight:700;margin:0;text-wrap:balance
 h5{margin:0}
 p{margin:0 0 .6em}
 /* --barh: the height of the bar along the bottom = its one-row height for this stage (--barh0) + the extra rows of icons the player asked for (--barx, set by the HUD) */
-#app{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:var(--ink);--barh:calc(var(--barh0) + var(--barx,0px))}
-/* held upright, the stage lies turned: its left edge runs along the top of the screen (the camera island, the status bar) and
-   its right edge along the bottom (the home bar), so those are the margins to keep the controls clear of */
-#app.rot{--gut:max(16px,env(safe-area-inset-top,0px));--gutr:max(16px,env(safe-area-inset-bottom,0px))}
+#app{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden;background:var(--ink);--barh:calc(var(--barh0) + var(--barx,0px));
+  /* the side margins of whatever runs into the screen's rounded corners (the top row, the bottom bar, full-screen panels) */
+  --gutc:max(var(--gut),var(--rcl,0px));--gutrc:max(var(--gutr),var(--rcr,0px))}
+/* Only the camera island needs its whole safe margin. On its side an iPhone reports the same margin for both long sides, so
+   the end without the island (the home bar's) is brought in to 16px - 32px for the rows that run into its rounded corners.
+   Held upright, the stage lies turned: its left edge runs along the top of the screen (the island, the status bar) and its
+   right edge along the bottom (the home bar) */
+#app.isl{--gutr:16px;--rcr:32px}
+#app.isr{--gut:16px;--rcl:32px}
+#app.rot{--gut:max(16px,env(safe-area-inset-top,0px));--gutr:16px}
+#app.rot.hb{--rcr:32px}
+#sai{position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;box-sizing:content-box;
+  padding:env(safe-area-inset-top,0px) env(safe-area-inset-right,0px) env(safe-area-inset-bottom,0px) env(safe-area-inset-left,0px)}
 #gl{position:absolute;left:0;top:0;display:block;touch-action:none}
 #world-ui{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 /* the versus card and the result screen stand alone: the HUD and the name tags over the units wait behind them */
@@ -64,7 +73,7 @@ p{margin:0 0 .6em}
 .fitx{display:inline-block;vertical-align:top;transform-origin:0 50%;white-space:nowrap} .fitted{text-overflow:clip!important}
 .t0{color:var(--t0)} .t1{color:var(--t1)} .t2{color:var(--gold)} .dim{color:var(--dim)} .gold{color:var(--gold)}
 i.w,.w{color:var(--bon);font-style:normal}
-#fps{position:absolute;left:var(--gut);bottom:2px;z-index:90;font:500 10px/1.3 ui-monospace,Menlo,Consolas,monospace;color:#d8f0c0;background:rgba(0,0,0,.6);padding:1px 6px;border-radius:3px;pointer-events:none;font-variant-numeric:tabular-nums}
+#fps{position:absolute;left:var(--gutc);bottom:2px;z-index:90;font:500 10px/1.3 ui-monospace,Menlo,Consolas,monospace;color:#d8f0c0;background:rgba(0,0,0,.6);padding:1px 6px;border-radius:3px;pointer-events:none;font-variant-numeric:tabular-nums}
 
 /* ------------------------------------------------------------ panels and buttons */
 .panel{background:var(--grain),linear-gradient(180deg,rgba(40,31,22,.95),rgba(17,13,10,.95));border:1px solid var(--line);border-radius:5px;
@@ -101,9 +110,9 @@ i.w,.w{color:var(--bon);font-style:normal}
 .tab.on{color:var(--gold3);background:linear-gradient(180deg,rgba(227,192,120,.22),rgba(227,192,120,.04));border-color:var(--line2);box-shadow:inset 0 1px 0 rgba(246,227,174,.25)}
 
 /* ------------------------------------------------------------ modal, toast */
-#modal{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 45%,rgba(8,6,5,.5),rgba(4,3,2,.82));padding:12px var(--gutr) 12px var(--gut)}
+#modal{position:absolute;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 45%,rgba(8,6,5,.5),rgba(4,3,2,.82));padding:12px var(--gutrc) 12px var(--gutc)}
 #modal.low{align-items:flex-end;background:rgba(4,3,2,.3);padding-bottom:calc(var(--barh) + 18px)}
-#modal.full{padding:8px var(--gutr) 8px var(--gut)}
+#modal.full{padding:8px var(--gutrc) 8px var(--gutc)}
 .dlg{display:flex;flex-direction:column;gap:10px;min-width:260px;max-width:min(680px,100%);max-height:100%;padding:10px 14px 12px}
 .dlg.narrow{max-width:min(390px,100%)}
 .dlg h3{font-size:18px;color:var(--gold);letter-spacing:.1em;padding:0 0 9px;text-align:center;background:var(--rule) bottom/100% 1px no-repeat;text-shadow:0 1px 0 #000,0 0 14px rgba(227,192,120,.25)}
@@ -147,7 +156,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 #scr-battle{pointer-events:none}
 #scr-battle>*{pointer-events:auto}
 #scr-battle::before{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 46%,transparent 50%,rgba(0,0,0,.5) 100%),linear-gradient(180deg,rgba(0,0,0,.42),transparent 13%,transparent 70%,rgba(0,0,0,.5))}
-.hud-top{position:absolute;left:var(--gut);right:var(--gutr);top:5px;height:34px;display:flex;align-items:center;gap:10px;pointer-events:none!important}
+.hud-top{position:absolute;left:var(--gutc);right:var(--gutrc);top:5px;height:34px;display:flex;align-items:center;gap:10px;pointer-events:none!important}
 .hud-top>*{pointer-events:auto}
 /* a slim bronze plate: the clock, small buttons, status boxes */
 .clock,.tb.mini,.res,.bar,.sbtn,.aimbar,.inspect,.logbox,.tip{border:5px solid transparent;border-image:var(--frame-s) 10 / 7px / 2px stretch;border-radius:0;
@@ -323,7 +332,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 /* what the turn will have left once this is used (a dash, haste, Action Surge, a jump) */
 .aimbar .ai span b.aft{font-size:10.5px;color:#1a120a;background:var(--gold3);border-radius:2px;padding:0 4px;margin-right:6px;font-weight:700}
 .aimbar .q{width:26px;min-height:26px;border-radius:50%;padding:0;font-family:var(--f-head);color:var(--gold3)}
-.bottom{position:absolute;left:var(--gut);right:var(--gutr);bottom:6px;height:var(--barh);display:flex;gap:7px;align-items:stretch}
+.bottom{position:absolute;left:var(--gutc);right:var(--gutrc);bottom:6px;height:var(--barh);display:flex;gap:7px;align-items:stretch}
 /* who is selected: name + light, hit points, action pips + movement, then what is left of spell slots and limited
    uses (this block gives way first when the box is short), and the spell being concentrated on */
 .res{width:190px;flex:none;padding:1px 5px;display:flex;flex-direction:column;gap:1px;overflow:hidden}
@@ -488,7 +497,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 
 
 /* ------------------------------------------------------------ menu screens (title, set-up, builder) */
-.menu{display:flex;flex-direction:column;padding:8px var(--gutr) 8px var(--gut);background:linear-gradient(90deg,rgba(8,6,4,.86),rgba(8,6,4,.5) 45%,rgba(8,6,4,.86))}
+.menu{display:flex;flex-direction:column;padding:8px var(--gutrc) 8px var(--gutc);background:linear-gradient(90deg,rgba(8,6,4,.86),rgba(8,6,4,.5) 45%,rgba(8,6,4,.86))}
 .menu.title{flex-direction:row;align-items:center;justify-content:space-between;gap:20px;background:radial-gradient(ellipse at 28% 45%,rgba(8,6,4,.25),transparent 60%),linear-gradient(90deg,rgba(8,6,4,.62),rgba(8,6,4,.05) 45%,rgba(8,6,4,.8))}
 .menu.title::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(0,0,0,.55),transparent 22%,transparent 72%,rgba(0,0,0,.7))}
 .tlogo{position:relative;flex:1;min-width:0;max-width:540px;padding-left:10px;display:flex;flex-direction:column;align-items:flex-start}
@@ -513,7 +522,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 .tmenu .btn.primary small{color:#5c430f}
 .trow{display:flex;gap:6px;flex-wrap:wrap}
 .tmenu .trow .btn{flex:1;min-height:32px;font-size:12px;justify-content:center;padding:3px 8px;font-family:var(--f-ui)}
-.tfoot{position:absolute;left:var(--gut);bottom:6px;font-size:10px;color:var(--mute);text-shadow:0 1px 3px #000}
+.tfoot{position:absolute;left:var(--gutc);bottom:6px;font-size:10px;color:var(--mute);text-shadow:0 1px 3px #000}
 .namedlg{display:flex;flex-direction:column;gap:10px}
 .nin.wide{width:100%;font-size:16px;min-height:40px}
 .sbar{display:flex;align-items:center;gap:10px;flex:none;min-height:42px;margin-bottom:6px;padding-bottom:5px;background:var(--rule) bottom/100% 1px no-repeat}
@@ -699,7 +708,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 .fx-bar.out{transform:scaleY(0)}
 @keyframes fxbar{from{transform:scaleY(0)}}
 
-#vs{position:absolute;inset:0;z-index:58;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px var(--gutr) 10px var(--gut);
+#vs{position:absolute;inset:0;z-index:58;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px var(--gutrc) 10px var(--gutc);
   background:linear-gradient(105deg,rgba(14,30,58,.93) 0,rgba(10,16,28,.95) 46%,rgba(6,5,4,.97) 50%,rgba(34,12,10,.95) 54%,rgba(66,18,14,.93) 100%);animation:vsin .4s ease-out both;transition:opacity .4s}
 #vs.out{opacity:0}
 @keyframes vsin{from{opacity:0}}
@@ -736,7 +745,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 .chatb{text-align:left;padding:6px 10px;border:1px solid var(--line);border-radius:3px;background:linear-gradient(#2a2119,#1c1610);font-size:12.5px;line-height:1.35;min-height:34px}
 .chatb:active{filter:brightness(1.4)}
 
-#result{position:absolute;inset:0;z-index:57;display:flex;align-items:center;justify-content:center;padding:8px var(--gutr) 8px var(--gut);animation:vsin .7s ease-out both;
+#result{position:absolute;inset:0;z-index:57;display:flex;align-items:center;justify-content:center;padding:8px var(--gutrc) 8px var(--gutc);animation:vsin .7s ease-out both;
   background:radial-gradient(ellipse at 50% 30%,rgba(60,44,18,.55),rgba(6,5,4,.9) 70%)}
 #result.lose{background:radial-gradient(ellipse at 50% 30%,rgba(60,14,10,.55),rgba(6,4,4,.93) 70%)}
 #result.draw{background:radial-gradient(ellipse at 50% 30%,rgba(40,40,44,.55),rgba(6,5,5,.92) 70%)}
@@ -827,6 +836,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 .vbtn.on{border-color:var(--ok);color:var(--ok)}
 .tb.chat.live{box-shadow:inset 0 0 0 1px var(--ok)} .tb.chat.live span::after{content:'●';color:var(--ok);font-size:8px;margin-left:3px;vertical-align:middle}
 .voicel{gap:10px}
+.lobby .rcshare{flex:none}
 </style>
 </head>
 <body>
@@ -838,7 +848,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 <div id="modal" hidden></div>
 <div id="toast" hidden></div>
 </div>
-<script>window.TT_APP = '46ae149a4c';</script>
+<script>window.TT_APP = '8bd83d0780';</script>
 <script>
 /* ==== core.js ==== */
 /* Triad Tactics v2 — core: namespace, constants, rng, dice, small math */
@@ -846,7 +856,7 @@ i.w,.w{color:var(--bon);font-style:normal}
   'use strict';
   const TT = g.TT = {};
   TT.VERSION = 24;          // save / online compatibility key
-  TT.PATCH = 4;             // shown after the version (v2.24.1): changes that keep saves and online play compatible
+  TT.PATCH = 5;             // shown after the version (v2.24.1): changes that keep saves and online play compatible
   TT.PB = 3;                // proficiency bonus at level 5
   TT.LEVEL = 5;
   TT.SIGHT_RT = 20;         // metres: a non-hidden enemy is seen inside this range (exploration)
@@ -9347,14 +9357,53 @@ i.w,.w{color:var(--bon);font-style:normal}
   UI.touch = function () { try { return (navigator.maxTouchPoints || 0) > 0 && window.matchMedia('(pointer: coarse)').matches; } catch (e) { return false; } };
   UI.wantRotate = function () { return UI.opt.rotate == null ? UI.touch() : !!UI.opt.rotate; };
 
+  /* the screen's safe-area insets in CSS px (camera island or notch, status bar, home bar), read off a hidden probe */
+  UI.insets = function () {
+    let p = UI._sai;
+    if (!p || !p.isConnected) { p = UI._sai = document.createElement('div'); p.id = 'sai'; p.setAttribute('aria-hidden', 'true'); document.body.appendChild(p); }
+    const s = getComputedStyle(p), n = k => parseFloat(s[k]) || 0;
+    return { t: n('paddingTop'), r: n('paddingRight'), b: n('paddingBottom'), l: n('paddingLeft') };
+  };
+  /* which long side the camera island is on while the phone lies on its side: 'l', 'r' or '' (not known). window.orientation
+     90 = turned to the left, the top of the phone (with the island) on the left; -90 = turned to the right. The newer
+     screen.orientation.angle counts the same way since Safari 17 (16.4 counted the other way, but has window.orientation) */
+  UI.islandSide = function () {
+    let a = g.orientation;
+    if (typeof a !== 'number') { const so = g.screen && g.screen.orientation; a = so && typeof so.angle === 'number' ? (so.angle === 270 ? -90 : so.angle) : null; }
+    return a === 90 ? 'l' : a === -90 ? 'r' : '';
+  };
+  /* An iPhone running the game from the Home Screen draws the page from the very top of the screen, under the status bar
+     (black-translucent), but iOS 26 lays it out as tall as the screen less that bar, leaving a dead band of the same
+     height along the bottom (WebKit bug 301108). Then, and only then (the shortfall is exactly the top inset), the page
+     takes the screen's own height. Safari itself, Android and a fixed iOS are left alone. */
+  UI.fill = function (ins) {
+    let h = '';
+    const sc = g.screen;
+    if (navigator.standalone === true && /iPhone|iPod/.test(navigator.userAgent) && sc && ins.t > 0) {
+      const land = g.innerWidth > g.innerHeight, fh = land ? Math.min(sc.width, sc.height) : Math.max(sc.width, sc.height), d = fh - g.innerHeight;
+      if (d > 0 && Math.abs(d - ins.t) <= 4) h = fh + 'px';
+    }
+    const de = document.documentElement, b = document.body;
+    if (de.style.height !== h) { de.style.height = h; b.style.height = h; }
+    UI.filled = !!h;
+    if (h && (g.scrollX || g.scrollY)) g.scrollTo(0, 0);  // the page is now taller than iOS's viewport: nothing may scroll it (a focused field, say)
+  };
+
   /* The game is always laid out landscape. Held upright, the stage is turned 90 degrees. */
   UI.layout = function () {
-    const b = document.body, w = b.clientWidth, hh = b.clientHeight, app = $('#app');
-    if (!app || !w || !hh) return;
-    if (UI._entry) return;                                // typing: where the keyboard shrinks the page, the stage must not jump (laid out again when the field closes)
+    const app = $('#app');
+    if (!app || UI._entry) return;                        // typing: where the keyboard shrinks the page, the stage must not jump (laid out again when the field closes)
+    const ins = UI.insets(); UI.fill(ins);
+    const b = document.body, w = b.clientWidth, hh = b.clientHeight;
+    if (!w || !hh) return;
     const tall = hh > w * 1.02, rot = tall && UI.wantRotate();
     UI.rot = rot; UI.gw = rot ? hh : w; UI.gh = rot ? w : hh; UI.port = tall && !rot;
     app.classList.toggle('rot', rot); app.classList.toggle('port', UI.port);
+    /* An iPhone on its side keeps the same safe margin along both long sides though only one has the camera island; the
+       other end of the phone (the home bar's) is brought in close (the stylesheet: #app.isl / .isr). Held upright with the
+       stage turned, that end is the stage's right edge (#app.hb when there is a home bar). */
+    const side = !tall && ins.l > 0 && ins.r > 0 && Math.abs(ins.l - ins.r) < 2 ? UI.islandSide() : '';
+    app.classList.toggle('isl', side === 'l'); app.classList.toggle('isr', side === 'r'); app.classList.toggle('hb', rot && ins.b > 0);
     app.classList.toggle('compact', UI.gh < 430); app.classList.toggle('low', UI.gh < 392); app.classList.toggle('tiny', UI.gh < 360); app.classList.toggle('narrow', UI.gw < 740);
     app.style.width = UI.gw + 'px'; app.style.height = UI.gh + 'px';
     app.style.setProperty('--gw', UI.gw + 'px'); app.style.setProperty('--gh', UI.gh + 'px');        // the stage's own size for the stylesheet (vw / vh are the screen's, not the turned stage's)
@@ -12109,7 +12158,8 @@ i.w,.w{color:var(--bon);font-style:normal}
     ['オンライン対戦', `
 <h5>ロビー</h5>
 <p>離れた相手と1対1で戦います。まず<b>2人ともロビーに入り</b>、そこで編成とルールを決めます。<b>部屋を作った側（ホスト）が青軍</b>、入った側が赤軍です。</p>
-<ul><li>つなぎ方は遊んでいる場所で変わります。<b>部屋コード（5文字）</b>を伝える方式か、<b>招待コードと返信コード</b>を1回ずつ送り合う方式のどちらかが、「オンライン対戦」の画面に案内されます。</li>
+<ul><li>ホストが「部屋を作る」を押すと<b>部屋コード（5文字）</b>が出ます。相手は「部屋に入る」でそのコードを入力するだけです。アプリ版では、ロビーの<b>「共有」</b>でコードとリンクをメッセージアプリなどに送れ、相手はリンクを開くだけで入れます。</li>
+<li>アプリ版で部屋コードではつながらないときは、「オンライン対戦」の<b>「つながらないとき：コードを手で送り合う」</b>で、招待コードと返信コードを1回ずつ送り合ってつなぎます。</li>
 <li>マップ・制限時間・サドンデスの周回数・所持金・<b>1ターンの時間</b>・<b>劣勢の奮起</b>の有無はホストが決め、入った側の画面にもすぐ反映されます。</li>
 <li>チームは、ロビーの中でそれぞれ「選ぶ」「編集」で決めます。相手の編成は、試合で出会うまで分かりません。</li>
 <li>入った側が<b>「準備完了」</b>を押すと、ホストの<b>「開始」</b>が押せるようになります。ホストがルールを変えると、準備完了は取り消されます。</li>
@@ -12117,7 +12167,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 <h5>試合中</h5>
 <ul><li>探索中は両者が同時に動きます。戦闘中は自分の番だけ操作できます。</li>
 <li><b>1ターンの時間</b>（30・60・90秒。「なし」も選べる）を過ぎると、そのターンは自動で終わります。残り時間は上の時計の右の輪に出ます。リアクションを使うかどうかの選択は20秒までで、過ぎると「使わない」になります。</li>
-<li><b>接続が切れたとき</b>：相手の応答がなくなると、ホスト側の試合は<b>止まり</b>、「待つ／再接続／終了」を選べます。アプリ版（招待コード方式）では、ホストが<b>「再接続コードを作る」</b>で新しい招待コードを作り、相手は試合の画面の<b>「再接続する」</b>（アプリを開き直したなら、タイトルの「オンライン対戦 → 部屋に入る」）に貼って返信コードを返すと、止まった所から再開します。メニュー（☰）の「再接続」からも始められます。部屋コード方式では、同じ部屋コードで入り直せば続きから戻れます。ホストが画面を閉じた場合は、その試合は続けられません。</li>
+<li><b>接続が切れたとき</b>：相手の応答がなくなると、ホスト側の試合は<b>止まり</b>ます。部屋コードでつないだときは<b>自動でつなぎ直し</b>、つながればそのまま再開します。入った側がアプリや画面を閉じてしまったときは、開き直して<b>同じ部屋コードで入り直す</b>と、止まった所に戻れます。招待コード方式では、ホストが<b>「再接続コードを作る」</b>（メニュー☰の「再接続」からも可）で新しい招待コードを作り、相手は試合の画面の<b>「再接続する」</b>（アプリを開き直したなら、タイトルの「オンライン対戦」→「つながらないとき：コードを手で送り合う」→「部屋に入る」）に貼って返信コードを返します。ホストが画面を閉じた場合は、その試合は続けられません。</li>
 <li>両者が同じ版であることが必要です（版番号はタイトルの左下）。</li></ul>
 <h5>チャット</h5>
 <p>ロビーでも試合中でも、<b>定型文</b>（挨拶・称賛・挑発）と、キーボードで打った<b>文字</b>（60文字まで）を送れます。試合中は右上の「会話」から。文字の入力欄は画面の上の端に出ます（端末を縦のまま横向きに構えて遊んでいるときも、入力欄だけはキーボードと同じ向きです）。相手のチャットを見たくなければ、設定の「プレイヤー」で消せます。</p>
@@ -13112,7 +13162,7 @@ i.w,.w{color:var(--bon);font-style:normal}
   if (g.addEventListener) g.addEventListener('beforeinstallprompt', e => { e.preventDefault(); Sc.installEvt = e; });
   Sc.install = function () {
     if (Sc.installEvt) { const ev = Sc.installEvt; Sc.installEvt = null; try { ev.prompt(); } catch (e) { /* ignore */ } return; }
-    UI.dialog('ホーム画面に追加', '<p><b>iPhone / iPad</b>：Safariの共有ボタン（四角から矢印が出ている印）を押し、「ホーム画面に追加」を選びます。</p><p><b>Android</b>：ブラウザーのメニューから「アプリをインストール」または「ホーム画面に追加」を選びます。</p><p class="dim">追加したアイコンから開くと全画面になり、2回目以降は電波がなくても起動します。編成や設定はこの端末の中に保存されます。</p>', null, { cls: 'narrow' });
+    UI.dialog('ホーム画面に追加', '<p><b>iPhone / iPad</b>：Safariの共有ボタン（四角から矢印が出ている印。見当たらなければ「…」の中）を押し、「ホーム画面に追加」を選びます。追加の画面でアイコンが文字になっているときは、設定 → アプリ → Safari → 詳細 → Webサイトデータ でこのサイトのデータを消してから、開き直して追加してください。</p><p><b>Android</b>：ブラウザーのメニューから「アプリをインストール」または「ホーム画面に追加」を選びます。</p><p class="dim">追加したアイコンから開くと全画面になり、2回目以降は電波がなくても起動します。編成や設定はこの端末の中に保存されます。</p>', null, { cls: 'narrow' });
   };
   /* the player's display name (shown to opponents) */
   Sc.askName = function (done, first) {
@@ -13281,7 +13331,8 @@ i.w,.w{color:var(--bon);font-style:normal}
    After a match both come back to the same lobby. chat = the last few lines said, [[n, preset id | typed text]].
    Because only the latest object matters, the same code runs over three very different carriers:
      art  : the artifact runtime — host writes a db document, guest answers through room presence (or a db document)
-     rtc  : a WebRTC data channel, set up by exchanging two pasted codes (the installable app build)
+     rtc  : a WebRTC data channel, set up by exchanging two pasted codes (the installable app build, as a fallback)
+     relay: the same data channel, its two codes carried by public MQTT brokers under a five-letter room code (app build)
      loop : a BroadcastChannel between two tabs (tests) */
 (function (g) {
   'use strict';
@@ -13418,6 +13469,163 @@ i.w,.w{color:var(--bon);font-style:normal}
     L.close = () => { alive = false; try { if (mic) for (const t of mic.getTracks()) t.stop(); mic = null; if (dc) dc.close(); if (pc) pc.close(); } catch (e) { /* ignore */ } };
     return L;
   };
+  /* -- the relay: the same direct WebRTC link, but the two codes travel by themselves through public MQTT brokers, so
+        the players only share a five-letter room code. The host keeps its invitation as a retained message under the
+        room's topic; a guest that enters the code answers it there; the host reads the answer. If the direct link
+        breaks, the host simply posts a new invitation and the guest answers again - the session goes on as it was.
+        Several brokers of different operators carry every message (whichever answers first counts). -- */
+  Net.RELAYS = ['wss://broker.emqx.io:8084/mqtt', 'wss://broker.hivemq.com:8884/mqtt', 'wss://test.mosquitto.org:8081/mqtt'];
+  Net.relays = () => { const m = g.location && /[?&]relay=([^&#]+)/.exec(location.search || ''); return m ? [decodeURIComponent(m[1])] : Net.RELAYS; };      // ?relay=… : the tests' own broker
+  const rid = n => { const A = 'abcdefghijkmnpqrstuvwxyz23456789'; let s = ''; for (let i = 0; i < n; i++) s += A[Math.floor(Math.random() * A.length)]; return s; };
+  /* a small MQTT 3.1.1 client over a WebSocket: connect (clean session), subscribe at QoS 0, publish at QoS 0 (retained or
+     not), keep-alive pings, reconnect with growing pauses. Enough for passing a few short messages; nothing is stored */
+  function Mqtt(url) {
+    const M = { url, up: false, onMsg: null, onUp: null, onDown: null }, subs = new Set(), te = new TextEncoder(), td = new TextDecoder();
+    let ws = null, buf = new Uint8Array(0), ping = 0, tmr = 0, tries = 0, closed = false, pid = 0;
+    const str = s => { const b = te.encode(s); const o = new Uint8Array(2 + b.length); o[0] = b.length >> 8; o[1] = b.length & 255; o.set(b, 2); return o; };
+    const cat = parts => { let n = 0; for (const p of parts) n += p.length; const o = new Uint8Array(n); let i = 0; for (const p of parts) { o.set(p, i); i += p.length; } return o; };
+    const pkt = (head, body) => { const len = []; let x = body.length; do { let d = x % 128; x = Math.floor(x / 128); if (x > 0) d |= 128; len.push(d); } while (x > 0); return cat([new Uint8Array([head].concat(len)), body]); };
+    const send = u8 => { try { if (ws && ws.readyState === 1) ws.send(u8); } catch (e) { /* closing */ } };
+    const subPkt = t => { pid = pid % 65535 + 1; return pkt(0x82, cat([new Uint8Array([pid >> 8, pid & 255]), str(t), new Uint8Array([0])])); };
+    M.sub = t => { subs.add(t); if (M.up) send(subPkt(t)); };
+    M.pub = (t, text, retain) => { if (!M.up) return false; send(pkt(0x30 | (retain ? 1 : 0), cat([str(t), te.encode(text || '')]))); return true; };
+    const handle = (head, body) => {
+      const type = head >> 4;
+      if (type === 2) {                                                   // CONNACK
+        if (body.length >= 2 && body[1] === 0) { M.up = true; tries = 0; for (const t of subs) send(subPkt(t)); clearInterval(ping); ping = setInterval(() => send(new Uint8Array([0xC0, 0])), 25000); if (M.onUp) M.onUp(M); }
+        else { log('mqtt refused', url, body[1]); try { ws.close(); } catch (e) { /* ignore */ } }
+      } else if (type === 3 && body.length >= 2) {                       // PUBLISH (QoS 0 from our subscriptions; QoS 1/2 would carry an id)
+        const tl = (body[0] << 8) | body[1], qos = (head >> 1) & 3; let o = 2 + tl; if (qos) o += 2;
+        if (o <= body.length && M.onMsg) M.onMsg(td.decode(body.subarray(2, 2 + tl)), td.decode(body.subarray(o)), !!(head & 1));
+      }
+    };
+    /* one WebSocket message may hold several MQTT packets, and one packet may come in pieces */
+    const feed = chunk => {
+      const b = new Uint8Array(buf.length + chunk.length); b.set(buf); b.set(chunk, buf.length); buf = b;
+      for (;;) {
+        if (buf.length < 2) return;
+        let len = 0, mul = 1, i = 1, d;
+        do { if (i >= buf.length) return; d = buf[i++]; len += (d & 127) * mul; mul *= 128; } while ((d & 128) && i < 5);
+        if (buf.length < i + len) return;
+        const head = buf[0], body = buf.slice(i, i + len); buf = buf.slice(i + len); handle(head, body);
+      }
+    };
+    const open = () => {
+      if (closed) return; buf = new Uint8Array(0);
+      try { ws = new WebSocket(url, ['mqtt']); } catch (e) { later(); return; }
+      ws.binaryType = 'arraybuffer';
+      ws.onopen = () => send(pkt(0x10, cat([str('MQTT'), new Uint8Array([4, 0x02, 0, 60]), str('tt2' + rid(16))])));     // MQTT 3.1.1, clean session, 60 s keep-alive
+      ws.onmessage = e => { if (e.data instanceof ArrayBuffer) feed(new Uint8Array(e.data)); };
+      ws.onclose = () => { const was = M.up; M.up = false; clearInterval(ping); if (was && M.onDown) M.onDown(M); later(); };
+      ws.onerror = () => { /* onclose follows */ };
+    };
+    const later = () => { if (closed) return; clearTimeout(tmr); tmr = setTimeout(open, Math.min(30000, 1500 * Math.pow(2, tries++))); };
+    /* back from another app (the share sheet, LINE…): an iPhone may have dropped the socket meanwhile - try again at once */
+    const vis = () => { if (closed || (g.document && document.hidden) || M.up || (ws && ws.readyState <= 1)) return; clearTimeout(tmr); tries = 0; open(); };
+    if (g.document) document.addEventListener('visibilitychange', vis);
+    M.close = () => { closed = true; clearTimeout(tmr); clearInterval(ping); if (g.document) document.removeEventListener('visibilitychange', vis); if (ws) { try { if (ws.readyState === 1) ws.send(new Uint8Array([0xE0, 0])); ws.close(); } catch (e) { /* ignore */ } } M.up = false; };
+    open();
+    return M;
+  }
+  /* all the brokers together: what is kept (retained) is posted to each broker as it comes up; every message is heard once */
+  function Sig(urls) {
+    const S2 = { onMsg: null, onUp: null, ups: 0 }, kept = new Map(), seen = new Set(), ms = urls.map(u => Mqtt(u));
+    for (const m of ms) {
+      m.onUp = () => { S2.ups++; for (const [t, s] of kept) m.pub(t, s, true); if (S2.onUp) S2.onUp(); };
+      m.onMsg = (t, s) => { if (!s) return; let o; try { o = JSON.parse(s); } catch (e) { return; } if (!o || typeof o !== 'object') return; if (o.id) { if (seen.has(o.id)) return; seen.add(o.id); if (seen.size > 200) seen.delete(seen.values().next().value); } if (S2.onMsg) S2.onMsg(t, o); };
+    }
+    S2.sub = t => { for (const m of ms) m.sub(t); };
+    S2.keep = (t, o) => { o.id = rid(10); const s = JSON.stringify(o); kept.set(t, s); for (const m of ms) m.pub(t, s, true); };
+    S2.drop = t => { if (!kept.has(t)) return; kept.delete(t); for (const m of ms) m.pub(t, '', true); };       // an empty retained message clears it
+    S2.dropAny = t => { kept.delete(t); for (const m of ms) m.pub(t, '', true); };
+    S2.anyUp = () => ms.some(m => m.up);
+    S2.close = () => { for (const m of ms) m.close(); };
+    return S2;
+  }
+  Net.Mqtt = Mqtt;
+  Links.relay = function (role, code) {
+    const L = { kind: 'relay', role, code, minGap: 180 }, base = 'triadtactics/2/' + code + '/', TI = base + 'i', TR = base + 'r', me = rid(10);
+    let sig = null, cur = null, alive = true, gen = 0, last = null, open = false, ever = false, micOn = false, fails = 0, answered = '', acceptedBy = '', waitT = 0, lastRx = 0, found = false, noHostT = 0, deadT = 0, retryT = 0, knockT = 0, hsLast = '';
+    const status = (s, t) => { if (alive && L.onStatus) L.onStatus(s, t); };
+    /* each attempt is a fresh direct link (a closed one cannot be opened again); what the session last put is handed on */
+    const fresh = () => {
+      if (cur) { const o = cur; cur = null; try { o.close(); } catch (e) { /* gone */ } }
+      const x = cur = Links.rtc(role); open = false;
+      x.onRemote = o => { lastRx = now(); if (L.onRemote) L.onRemote(o); };
+      x.onVoice = s => { if (L.onVoice) L.onVoice(s); };
+      x.onStatus = (s, t) => {
+        if (x !== cur || !alive) return;
+        if (s === 'peer') { open = true; ever = true; fails = 0; lastRx = now(); clearTimeout(waitT); clearTimeout(knockT); if (role === 'guest') sig.drop(TR); if (micOn) x.mic(true).catch(() => {}); status('peer'); }
+        else if (s === 'lost' || s === 'error') {
+          const was = open; open = false; if (!was) fails++;
+          if (was) status('lost');
+          else if (fails >= 3 && !ever) status('error', 'つながりませんでした。回線の組み合わせによっては直接つながらないことがあります。2台を同じWi-Fiにつないで試してください。');
+          if (role === 'host') { clearTimeout(retryT); retryT = setTimeout(invite, was ? 400 : 1500); } else { status('retry'); knock(); }
+        } else if (s === 'slow') status('slow', t);
+      };
+      if (last) x.put(last);
+      return x;
+    };
+    /* host: post a new invitation */
+    const invite = async () => {
+      if (!alive || role !== 'host') return; clearTimeout(waitT); gen++; acceptedBy = '';
+      const g0 = gen, x = fresh(); let c;
+      try { c = await x.offer(); } catch (e) { status('error', 'この端末では直接接続を使えません。'); return; }
+      if (x !== cur || !alive) return;
+      sig.keep(TI, { t: 'i', v: TT.VERSION, hs: me, g: g0, c, n: UI.myName() });
+    };
+    const hostHearSig = async o => {
+      /* a guest whose link is down asks for a new invitation (its page may have been asleep, or this side never noticed) */
+      if (o.t === 'k' && o.hs === me) { if (!open || now() - lastRx > 12000) { clearTimeout(retryT); retryT = setTimeout(invite, 200); } return; }
+      if (o.t !== 'r' || o.hs !== me || typeof o.c !== 'string') return;
+      if (o.v !== TT.VERSION) { status('error', '相手の版が違います（こちら v2.' + TT.VERSION + '）。両方とも最新にしてください。'); return; }
+      if (o.g !== gen) return;                                            // an answer to an older invitation
+      if (acceptedBy) {
+        /* another page answers the invitation already taken: the guest's app was opened again (its old link is silent),
+           or a stranger tries the same code while the guest is here (then the link is alive and the answer is ignored) */
+        if (o.gs !== acceptedBy && (!open || now() - lastRx > 12000)) invite();
+        return;
+      }
+      acceptedBy = o.gs || '?'; const x = cur;
+      try { await x.accept(o.c); } catch (e) { acceptedBy = ''; return; }
+      sig.dropAny(TR);
+      clearTimeout(waitT); waitT = setTimeout(() => { if (alive && x === cur && !open) { fails++; invite(); } }, 20000);
+    };
+    /* guest: answer every invitation of this room not answered yet */
+    const guestHearSig = async o => {
+      if (o.t !== 'i' || typeof o.c !== 'string') return;
+      if (o.v !== TT.VERSION) { status('error', 'ホストと版が違います（こちら v2.' + TT.VERSION + '・ホスト v2.' + o.v + '）。両方とも最新にしてください。'); return; }
+      if (!found) { found = true; clearTimeout(noHostT); status('found', typeof o.n === 'string' ? UI.cleanName(o.n, 'ホスト') : ''); }
+      const key = o.hs + ':' + o.g; if (key === answered) return; answered = key; hsLast = o.hs; clearTimeout(knockT);
+      const x = fresh(); let c;
+      try { c = await x.answer(o.c); } catch (e) { status('error', '部屋の招待を読めませんでした。'); return; }
+      if (x !== cur || !alive) return;
+      sig.keep(TR, { t: 'r', v: TT.VERSION, hs: o.hs, g: o.g, gs: me, c });
+      clearTimeout(waitT); waitT = setTimeout(() => { if (alive && x === cur && !open) { status('retry'); knock(); } }, 20000);
+    };
+    /* guest: while the link is down, knock now and then until a new invitation is answered */
+    const knock = () => { clearTimeout(knockT); knockT = setTimeout(() => { if (!alive || open || !hsLast) return; sig.keep(TR, { t: 'k', v: TT.VERSION, hs: hsLast, gs: me }); knock(); }, 6000); };
+    L.open = async function () {
+      sig = Sig(Net.relays());
+      sig.onMsg = (t, o) => { if (!alive) return; if (role === 'host' && t === TR) hostHearSig(o); else if (role === 'guest' && t === TI) guestHearSig(o); };
+      sig.sub(role === 'host' ? TR : TI);
+      let first = true;
+      sig.onUp = () => { if (!first) return; first = false; clearTimeout(deadT); if (role === 'guest') noHostT = setTimeout(() => { if (alive && !found) status('nohost'); }, 7000); };
+      deadT = setTimeout(() => { if (alive && !sig.anyUp()) status('error', '中継サーバーにつながりません。電波の良い所で試すか、「コードを手で送り合う」を使ってください。'); }, 10000);
+      if (role === 'host') invite();
+      status('open'); return true;
+    };
+    L.put = o => { last = o; if (cur) cur.put(o); return Promise.resolve(); };
+    L.ready = () => !!(cur && cur.ready());
+    L.voice = () => !!(cur && cur.voice());
+    L.mic = async on => { micOn = !!on; return cur ? cur.mic(on) : false; };
+    L.stats = () => (cur ? cur.stats() : Promise.resolve(null));
+    L.inner = () => cur;                                                  // tests
+    L.close = () => { alive = false; clearTimeout(waitT); clearTimeout(noHostT); clearTimeout(deadT); clearTimeout(retryT); clearTimeout(knockT);
+      if (sig) { if (role === 'host') { sig.dropAny(TI); sig.dropAny(TR); } else sig.drop(TR); const s0 = sig; setTimeout(() => s0.close(), 400); }
+      if (cur) { try { cur.close(); } catch (e) { /* gone */ } cur = null; } };
+    return L;
+  };
   Net.Links = Links;
 
   /* ------------------------------------------------------------ session */
@@ -13470,7 +13678,7 @@ i.w,.w{color:var(--bon);font-style:normal}
   /* ---- voice chat: only where the two devices are joined directly (the installed app); the artifact viewer has neither
      a microphone nor such a connection. Each side switches its own microphone, and may choose not to hear the other ---- */
   const Vc = Net.voice = { mic: false, hear: true, remoteMic: false, el: null };
-  Net.canVoice = () => !!(Net.link && Net.link.kind === 'rtc' && g.navigator && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+  Net.canVoice = () => !!(Net.link && (Net.link.kind === 'rtc' || Net.link.kind === 'relay') && g.navigator && navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
   Net.setMic = async function (on) {
     const L = Net.link; if (!Net.canVoice()) return false;
     if (!L.voice()) { UI.toast('相手とつながってから使えます'); return false; }
@@ -13506,12 +13714,12 @@ i.w,.w{color:var(--bon);font-style:normal}
      until the other side is heard again - over the same connection, or over a new one made with fresh codes
      (Net.relink; the installed app's direct link cannot be picked up again once it has closed) */
   function lost(text, gone) {
-    if (S.lostShown) return; S.lostShown = true; const Gm = UI.Game, direct = !gone && !!(Net.link && Net.link.kind === 'rtc');
+    if (S.lostShown) return; S.lostShown = true; const Gm = UI.Game, direct = !gone && !!(Net.link && Net.link.kind === 'rtc'), auto = !gone && !!(Net.link && Net.link.kind === 'relay');
     if (Net.role === 'host' && Gm.B && !Gm.B.over && S.ph === 'play') { S.hold = true; Gm.paused = true; }
     const btns = [{ label: '待つ', cls: 'ghost', fn: () => { S.lostShown = false; S.lastHeard = now(); } }];
     if (direct && Net.reconnectUI && !(Gm.B && Gm.B.over)) btns.push({ label: Net.role === 'host' ? '再接続コードを作る' : '再接続する', fn: () => { S.lostShown = false; S.lastHeard = now(); setTimeout(() => Net.reconnectUI(), 0); } });
     btns.push({ label: Net.role === 'host' ? '勝ちとして終了' : 'タイトルへ', cls: 'primary', fn: () => { if (Net.role === 'host' && Gm.B && !Gm.B.over) { S.hold = false; Gm.paused = false; Gm.B.finish(0, 'left'); Gm.B.step(); Gm.drain(); S.dirty = true; } else { Net.leave(); Gm.stop(); UI.Screens.title(); } } });
-    S.lostDlg = UI.dialog('接続', '<p>' + UI.esc(text) + '。</p><p class="dim">' + (Net.role === 'host' ? '試合は止めてあります。' : '') + '相手が戻るのを待つか、' + (direct ? '新しいコードでつなぎ直すか、' : '') + 'ここで終了できます。</p>', btns, { cls: 'narrow', sticky: true });
+    S.lostDlg = UI.dialog('接続', '<p>' + UI.esc(text) + '。</p><p class="dim">' + (Net.role === 'host' ? '試合は止めてあります。' : '') + (auto ? '自動でつなぎ直しています。つながると、そのまま再開します。ここで終了することもできます。' : '相手が戻るのを待つか、' + (direct ? '新しいコードでつなぎ直すか、' : '') + 'ここで終了できます。') + '</p>', btns, { cls: 'narrow', sticky: true });
   }
   /* a guest's build list is data from someone else: repair it, validate it, price it */
   function checkBuilds(list, gold) {
@@ -13694,6 +13902,7 @@ i.w,.w{color:var(--bon);font-style:normal}
     /* what the carrier reports is noted here first, then passed to whatever screen is listening (Net.onStatus) */
     link.onStatus = (s, t) => { if (Net.link !== link) return;
       if (role === 'host') { if (s === 'lost') { peerGone(); if (S.ph === 'play') lost('相手との接続が切れました'); } }
+      else if (s === 'lost' && link.kind === 'relay') { const had = S.peer; S.peer = false; if (had && S.hostPh !== 'bye') { if (S.ph === 'play' && UI.Game.B && !UI.Game.ended) lost('ホストとの接続が切れました'); else note('state'); } }      // the relay joins the two again by itself
       else if (s === 'lost' || s === 'nohost') { const had = S.peer; S.peer = false; if (had && S.hostPh !== 'bye') { if (s === 'lost' && S.ph === 'play' && UI.Game.B && !UI.Game.ended) lost('ホストとの接続が切れました'); else hostGone(); } }
       if (Net.onStatus) { try { Net.onStatus(s, t); } catch (e) { if (g.console) console.error(e); } } };
   }
@@ -13719,14 +13928,15 @@ i.w,.w{color:var(--bon);font-style:normal}
   Net.hostWith = function (link, rules) { begin('host', link); S.rules = rules; S.ph = 'lobby'; S.dirty = true; S.lastPut = 0; return link; };
   /* guest: attach to a link; the rules arrive with the host's first state */
   Net.guestWith = function (link) { begin('guest', link); return link; };
-  Net.init = function () { Net.detect(); };
+  Net.init = function () { Net.detect().then(() => { if (Net.deepLink) Net.deepLink(); }); };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 
 /* ==== ui-net.js ==== */
 /* Triad Tactics v2 — online play, the screens: make a room or enter one, then the LOBBY where both players sit while
    the host settles map and rules and each picks or edits its team; the guest says "ready", the host starts. After a
    match both come back to the same lobby. Which carrier is used depends on where the page runs: inside the artifact
-   viewer a five-letter room code (db + room); in the installed app two pasted codes (WebRTC). */
+   viewer a five-letter room code (db + room); in the installed app a five-letter room code too (the direct WebRTC link,
+   its two codes carried by public relay servers), or, when those cannot be reached, two pasted codes. */
 (function (g) {
   'use strict';
   const TT = g.TT, UI = TT.UI, h = UI.h, Net = UI.Net, Links = Net.Links, S = Net.S;
@@ -13747,19 +13957,35 @@ i.w,.w{color:var(--bon);font-style:normal}
     if (!env.db && !env.rtc && !env.loop) {
       UI.dialog('オンライン対戦', '<p>この開き方ではオンライン対戦を使えません。</p><p class="dim">サインインした状態でこの作品を開くか、ホーム画面に追加できる「アプリ版」を使ってください。</p>', null, { cls: 'narrow' }); return;
     }
+    const app = !env.loop && !env.db;
     const how = env.loop ? '（試験用の接続）' : env.db
       ? '<b>部屋コード（5文字）</b>でつなぎます。ホストは、この作品の持ち主（または編集できる人）が務めてください。相手は、サインインした状態で、この作品を共有された人か、同じアカウントの別の端末である必要があります。公開リンクで開いているだけの人は参加できないので、その場合は「アプリ版」を使ってください。'
-      : '<b>招待コード</b>と<b>返信コード</b>を1回ずつ送り合って、2台を直接つなぎます（メッセージアプリなどで貼り付け）。サーバーは使いません。';
+      : '部屋を作ると<b>部屋コード（5文字）</b>が出ます。相手は「部屋に入る」でそのコードを入れるか、「共有」で送ったリンクを開くだけでつながります。';
     body.append(h('p', { html: 'まず2人でロビーに入り、そこで編成やルールを決めます。部屋を作った側（ホスト）が青軍でマップとルールを決め、入った側が赤軍になります。' }), h('p.note', { html: how }),
-      h('div.netbtns', UI.btn('btn primary', '<b>部屋を作る</b><small>ホスト</small>', () => { UI.closeModal(); Net.create(); }), UI.btn('btn', '<b>部屋に入る</b><small>参加する</small>', () => { UI.closeModal(); Net.joinUI(); })));
+      h('div.netbtns', UI.btn('btn primary', '<b>部屋を作る</b><small>ホスト</small>', () => { UI.closeModal(); Net.create(); }), UI.btn('btn', '<b>部屋に入る</b><small>参加する</small>', () => { UI.closeModal(); Net.joinUI(); })),
+      app ? h('div.netrow', UI.btn('btn sm ghost', 'つながらないとき：コードを手で送り合う', () => { UI.closeModal(); Net.manualUI(); })) : null);
     UI.dialog('オンライン対戦', body, [{ label: 'とじる', cls: 'ghost' }], { cls: 'narrow netdlg' });
+  };
+  /* the app build's fallback: the two long codes carried by hand (when the relay servers cannot be reached) */
+  Net.manualUI = function () {
+    const body = h('div.netl', h('p', { html: '<b>招待コード</b>と<b>返信コード</b>を1回ずつ、メッセージアプリなどで送り合って2台を直接つなぎます。中継サーバーを使わないので、部屋コードでつながらないときに使ってください。' }),
+      h('div.netbtns', UI.btn('btn primary', '<b>部屋を作る</b><small>招待コードを送る</small>', () => { UI.closeModal(); Net.create(true); }), UI.btn('btn', '<b>部屋に入る</b><small>招待コードを貼る</small>', () => { UI.closeModal(); Net.joinUI(true); })));
+    UI.dialog('コードを手で送り合う', body, [{ label: 'もどる', cls: 'ghost', fn: () => setTimeout(() => Net.lobby(), 0) }], { cls: 'narrow netdlg' });
+  };
+  /* a shared link (…/#join=ABCDE) opens the room's door at once; the player is asked for a name first if it has none */
+  Net.deepLink = async function () {
+    const m = g.location && /^#join=([A-Za-z2-9]{5})$/.exec(location.hash || ''); if (!m) return;
+    const env = await Net.detect(); if (env.db || env.loop || !env.rtc) return;
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* the code stays in the address */ }
+    const code = m[1].toUpperCase(), go = () => Net.joinUI(false, code);
+    if (!UI.opt.name) { Sc().asked = true; setTimeout(() => Sc().askName(() => { Sc().title(); setTimeout(go, 200); }, true), 300); } else setTimeout(go, 300);
   };
 
   /* ------------------------------------------------------------ host: open the room and sit down in the lobby at once */
-  Net.create = async function () {
+  Net.create = async function (manual) {
     const env = await Net.detect(), C = Sc().cfg; Net.err = ''; Net.inv = '';
-    if (env.loop || env.db) {
-      const code = (env.loop && loopCode()) || Net.code(), link = env.loop ? Links.loop('host', code) : Links.art('host', code, env);
+    if (env.loop || env.db || !manual) {
+      const code = (env.loop && loopCode()) || Net.code(), link = env.loop ? Links.loop('host', code) : env.db ? Links.art('host', code, env) : Links.relay('host', code);
       Net.hostWith(link, rulesOf(C)); Net.room();
       if (link.open) await link.open();                                              // a refusal arrives as status 'error' and is shown in the lobby
       return;
@@ -13807,26 +14033,26 @@ i.w,.w{color:var(--bon);font-style:normal}
   };
 
   /* ------------------------------------------------------------ guest: find the room; the lobby opens when the host answers */
-  Net.joinUI = async function () {
+  Net.joinUI = async function (manual, code0) {
     const env = await Net.detect(), stat = h('div.netstat', ''), say = (t, cls) => { stat.textContent = t; stat.className = 'netstat' + (cls ? ' ' + cls : ''); };
     const back = () => { quit(); UI.closeModal(); Sc().title(); };
     Net.err = '';
     const listen = () => {
-      Net.onStatus = (s, t) => { if (s === 'error') say(t || '接続できません', 'bad'); else if (s === 'nohost') say('その部屋は見つかりません。コードを確かめてください。', 'bad'); else if (s === 'peer') say('ホストとつながりました。', 'ok'); else if (s === 'lost') say('ホストとの接続が切れました。', 'bad'); else if (s === 'slow') UI.toast(t || '通信が不安定です'); };
+      Net.onStatus = (s, t) => { if (s === 'error') say(t || '接続できません', 'bad'); else if (s === 'nohost') say('その部屋は見つかりません。コードを確かめてください（ホストが部屋を作れば、そのままつながります）。', 'bad'); else if (s === 'found') say((t ? t + ' の' : '') + '部屋が見つかりました。つないでいます…', 'ok'); else if (s === 'retry') say('つなぎ直しています…'); else if (s === 'peer') say('ホストとつながりました。', 'ok'); else if (s === 'lost') say('ホストとの接続が切れました。', 'bad'); else if (s === 'slow') UI.toast(t || '通信が不安定です'); };
       Net.onLobby = kind => { if (kind === 'bye') { say('ホストが部屋を閉じました。', 'bad'); return; } if (kind === 'ver') { say('ホストと版が違うため参加できません。', 'bad'); return; } if (S.rules && S.peer) { UI.closeModal(); Net.room(); } };
     };
-    if (env.loop || env.db) {
-      const inp = h('input.nin.codein', { type: 'text', maxLength: 5, placeholder: 'ABCDE', autocomplete: 'off', autocapitalize: 'characters', value: (env.loop && loopCode()) || '' });
+    if (env.loop || env.db || (env.rtc && !manual)) {
+      const inp = h('input.nin.codein', { type: 'text', maxLength: 5, placeholder: 'ABCDE', autocomplete: 'off', autocapitalize: 'characters', value: code0 || (env.loop && loopCode()) || '' });
       for (const ev of ['pointerdown', 'keydown', 'keyup']) inp.addEventListener(ev, e => e.stopPropagation());
       const enter = async () => {
         const code = inp.value.trim().toUpperCase(); if (!/^[A-Z2-9]{5}$/.test(code)) { say('部屋コードは5文字です（英大文字と数字）。', 'bad'); return; }
         if (Net.link) Net.leave(true);
-        const link = env.loop ? Links.loop('guest', code) : Links.art('guest', code, env); Net.guestWith(link); listen(); say('部屋を探しています…');
+        const link = env.loop ? Links.loop('guest', code) : env.db ? Links.art('guest', code, env) : Links.relay('guest', code); Net.guestWith(link); listen(); say('部屋を探しています…');
         if (link.open) await link.open();
       };
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') enter(); });
       UI.dialog('部屋に入る', h('div.netl', h('p', 'ホストから聞いた部屋コードを入力してください。'), inp, stat), [{ label: 'やめる', cls: 'ghost', keep: true, fn: back }, { label: '入る', cls: 'primary', keep: true, fn: enter }], { cls: 'narrow netdlg', sticky: true });
-      setTimeout(() => { try { inp.focus(); } catch (e) { /* ignore */ } }, 60);
+      if (code0) enter(); else setTimeout(() => { try { inp.focus(); } catch (e) { /* ignore */ } }, 60);
       return;
     }
     if (!env.rtc) { Net.lobby(); return; }
@@ -13885,7 +14111,9 @@ i.w,.w{color:var(--bon);font-style:normal}
     };
     const main = host ? UI.btn('btn primary big', '開始', start, { snd: 'confirm' }) : UI.btn('btn primary big', '準備完了', ready, { snd: 'confirm' });
     const chip = L.code ? h('div.rcode', { title: 'タップでコピー', onclick: () => copy(L.code, null) }, h('em', '部屋コード'), h('b', L.code)) : (host ? UI.btn('btn sm rcbtn', 'コードで接続', () => Net.codes()) : null);
-    r.append(h('div.sbar', UI.btn('btn sm ghost', host ? '← 閉じる' : '← 退出', leave), h('h2', 'ロビー'), chip, main), h('div.scols', col1, col2, col3));
+    /* the app build: the code (and a link that enters the room) handed on through the phone's own share sheet */
+    const share = host && L.kind === 'relay' ? UI.btn('btn sm rcshare', '共有', () => Net.share(L.code), { title: '部屋コードとリンクを送る' }) : null;
+    r.append(h('div.sbar', UI.btn('btn sm ghost', host ? '← 閉じる' : '← 退出', leave), h('h2', 'ロビー'), chip, share, main), h('div.scols', col1, col2, col3));
     UI.scroll(col1); UI.scroll(col2);
 
     /* the parts that change while both sit here */
@@ -13939,6 +14167,12 @@ i.w,.w{color:var(--bon);font-style:normal}
     };
   };
 
+  /* the room code to the other player: the share sheet where there is one (LINE, Messages…), else the clipboard */
+  Net.share = function (code) {
+    const url = location.origin + location.pathname + '#join=' + code, text = 'トライアド・タクティクスで対戦しよう。部屋コード ' + code + '（「オンライン対戦 → 部屋に入る」で入力。リンクを開いてもOK）';
+    try { if (navigator.share) { navigator.share({ title: 'トライアド・タクティクス', text, url }).catch(() => {}); return; } } catch (e) { /* fall back to copying */ }
+    copy(text + '\n' + url, null);
+  };
   /* voice chat (the app build's direct link only): this side's microphone, and whether the other side is heard */
   Net.voiceBtn = function () { if (!Net.canVoice()) return null; const b = UI.btn('btn sm vbtn', '', () => Net.voiceUI()); Net.voiceLabel(b); return b; };
   Net.voiceLabel = function (b) { const Vc = Net.voice; b.textContent = 'ボイス' + (Vc.mic ? '：マイク入' : ''); b.classList.toggle('on', !!Vc.mic); };
@@ -13967,7 +14201,11 @@ i.w,.w{color:var(--bon);font-style:normal}
     UI.onLayout = () => { if (UI.View.inited) UI.View.resize(); if (UI.HUD && UI.HUD.el && UI.Game.running) UI.HUD.applyRows(true); };
     UI.layout();
     window.addEventListener('resize', UI.layout);
-    window.addEventListener('orientationchange', () => setTimeout(UI.layout, 80));
+    /* turning the phone from one side straight to the other leaves the page's size as it was: only these tell (the camera
+       island changes sides). The safe-area insets can settle a moment after the turn, so it is looked at twice */
+    const turned = () => { setTimeout(UI.layout, 80); setTimeout(UI.layout, 450); };
+    window.addEventListener('orientationchange', turned);
+    try { if (g.screen && g.screen.orientation && g.screen.orientation.addEventListener) g.screen.orientation.addEventListener('change', turned); } catch (e) { /* not offered */ }
     if (window.ResizeObserver) new ResizeObserver(() => UI.layout()).observe(document.body);
     document.addEventListener('contextmenu', e => e.preventDefault());
     /* a tap on the dimmed ground round a window closes it - answered on the finger's lift, so that it also works for a

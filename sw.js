@@ -1,6 +1,6 @@
 /* Triad Tactics — offline cache. The page itself is fetched fresh when online and served from the cache when not. */
-const C = 'tt2-46ae149a4c';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest?v=46ae149a4c', 'icon-180.png?v=46ae149a4c', 'icon-192.png?v=46ae149a4c', 'icon-512.png?v=46ae149a4c', 'icon-maskable-512.png?v=46ae149a4c'];
+const C = 'tt2-8bd83d0780';
+const SHELL = ['./', 'index.html', 'apple-touch-icon.png', 'manifest.webmanifest?v=8bd83d0780', 'icon-180.png?v=8bd83d0780', 'icon-192.png?v=8bd83d0780', 'icon-512.png?v=8bd83d0780', 'icon-maskable-512.png?v=8bd83d0780'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(C).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.indexOf('tt2-') === 0 && k !== C).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
