@@ -833,7 +833,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 <div id="modal" hidden></div>
 <div id="toast" hidden></div>
 </div>
-<script>window.TT_APP = '94b55c7631';</script>
+<script>window.TT_APP = '9600c7155b';</script>
 <script>
 /* ==== core.js ==== */
 /* Triad Tactics v2 — core: namespace, constants, rng, dice, small math */
@@ -841,7 +841,7 @@ i.w,.w{color:var(--bon);font-style:normal}
   'use strict';
   const TT = g.TT = {};
   TT.VERSION = 24;          // save / online compatibility key
-  TT.PATCH = 1;             // shown after the version (v2.24.1): changes that keep saves and online play compatible
+  TT.PATCH = 2;             // shown after the version (v2.24.1): changes that keep saves and online play compatible
   TT.PB = 3;                // proficiency bonus at level 5
   TT.LEVEL = 5;
   TT.SIGHT_RT = 20;         // metres: a non-hidden enemy is seen inside this range (exploration)
@@ -9331,7 +9331,7 @@ i.w,.w{color:var(--bon);font-style:normal}
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch (e) { return false; } },
     del(k) { try { localStorage.removeItem(k); } catch (e) { /* ignore */ } }
   };
-  UI.opt = Object.assign({ rotate: null, vBgm: 0.6, vSe: 0.8, vVoice: 0.8, camFollow: true, speed: 1, hints: true, confirmMove: null, confirmAct: null, moveRT: 'tap', moveTB: 'tap', camDist: 22, camPitch: 0.82, name: '', chat: true, npcTalk: true, fx: true, barRows: 1, mini: 2, miniUp: 'cam' },
+  UI.opt = Object.assign({ rotate: null, vBgm: 0.6, vSe: 0.8, vVoice: 0.8, camFollow: true, speed: 1, hints: true, confirmMove: null, confirmAct: null, moveRT: 'tap', moveTB: 'tap', camDist: 22, camPitch: 0.82, name: '', chat: true, npcTalk: true, fx: true, barRows: 1, mini: 2, miniUp: 'cam', silentPlay: true },
     UI.store.get('tt2_opt', {}));
   UI.saveOpt = () => UI.store.set('tt2_opt', UI.opt);
   /* a display name: trimmed, no control characters, at most 12 characters; `fallback` when empty */
@@ -9572,9 +9572,20 @@ i.w,.w{color:var(--bon);font-style:normal}
     dv.setUint32(24, 44100, true); dv.setUint32(28, 88200, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true); w(36, 'data'); dv.setUint32(40, n * 2, true);
     return b;
   }
+  A.apple = APPLE;
+  /* UI.opt.silentPlay (default on): sound also with the ring / silent switch set to silent. Off: like other games, the
+     switch silences it, and other apps' music keeps playing alongside. */
+  A.loud = () => { const O = TT.UI && TT.UI.opt; return !(O && O.silentPlay === false); };
   A.session = function () {
     /* A.micOn: voice chat has the microphone open, which a play-only session would silence */
-    try { const s = g.navigator && g.navigator.audioSession, want = A.micOn ? 'play-and-record' : 'playback'; if (s && s.type !== want) s.type = want; } catch (e) { /* not offered here */ }
+    const s = g.navigator && g.navigator.audioSession, loud = A.loud();
+    try { const want = A.micOn ? 'play-and-record' : loud ? 'playback' : 'ambient'; if (s && s.type !== want) s.type = want; } catch (e) { /* not offered here */ }
+    /* nothing of ours is "media": no entry on the lock screen / in the control centre */
+    try { const ms = g.navigator && g.navigator.mediaSession; if (ms && !A.msDone) { A.msDone = true; ms.metadata = null; ms.playbackState = 'none'; } } catch (e) { /* optional */ }
+    /* The silent looping <audio> below is only for iPhones without that switch (before iOS 17): a playing <audio>
+       element is what iOS shows on the lock screen as "now playing", so it is not used where the page can ask for the
+       session itself, nor when the player lets the silent switch rule */
+    if (s || !loud) { A.keepStop(); return; }
     if (!APPLE || !g.document || A.keepOff) return;
     try {
       if (!A.keep) {
@@ -9587,6 +9598,8 @@ i.w,.w{color:var(--bon);font-style:normal}
       if (A.keep.paused && !document.hidden) { const p = A.keep.play(); if (p && p.catch) p.catch(() => {}); }
     } catch (e) { A.keepOff = true; }
   };
+  /* the keep-alive element given up for good (the page asks for its session itself, or the silent switch rules) */
+  A.keepStop = function () { if (!A.keep) return; try { A.keep.pause(); A.keep.removeAttribute('src'); A.keep.load(); } catch (e) { /* gone anyway */ } A.keep = null; };
   A.hidden = function (h) {
     if (A.keep && !A.keepOff) { try { if (h) A.keep.pause(); else { const p = A.keep.play(); if (p && p.catch) p.catch(() => {}); } } catch (e) { /* the next tap starts it again */ } }
     if (!A.ctx || !A.ctx.suspend) return; if (h) A.ctx.suspend().catch(() => {}); else A.ctx.resume().catch(() => {});
@@ -13231,6 +13244,7 @@ i.w,.w{color:var(--bon);font-style:normal}
       const vol = (k, test) => UI.slider(O[k], v => { O[k] = Math.round(v * 100) / 100; if (TT.Audio) TT.Audio.volumes(); clearTimeout(vol.t); vol.t = setTimeout(() => { UI.saveOpt(); if (test) test(); }, 250); });
       head('音量');
       row('BGM', vol('vBgm')); row('効果音', vol('vSe', () => TT.Audio && TT.Audio.play('hit'))); row('ボイス', vol('vVoice', () => TT.Voice && TT.Voice.test()));
+      if (TT.Audio && TT.Audio.apple) row('消音モードのとき', seg([[true, '鳴らす'], [false, '鳴らさない']], O.silentPlay !== false, v => { O.silentPlay = v; if (TT.Audio.session) TT.Audio.session(); redo(); }), '鳴らす：iPhoneの消音スイッチがオンでも音を出す（ほかのアプリの音楽は止まる）。鳴らさない：ほかのゲームと同じく消音スイッチに従い、ほかのアプリの音楽と一緒に流れる');
       box.appendChild(h('p.note', 'BGMと効果音はこのページの中で合成し、キャラクターの声は収録した音声を再生しています（声の種類は編成画面の「基本」で選べます）。音が出ないときは、端末の音量と消音スイッチを確認してください。'));
     } else {
       head('プレイヤー');
@@ -13959,7 +13973,9 @@ i.w,.w{color:var(--bon);font-style:normal}
       md.addEventListener('click', e => { if (bT && performance.now() - bT < 800) return; if (e.target.id === 'modal' && !UI._sticky) UI.closeModal(); }); }
     /* sound may only start inside a gesture. With a finger that is the moment it LIFTS (pointerup / touchend / click),
        not the moment it lands, so every kind of input event gets a try */
-    const unlock = () => { if (TT.Audio) TT.Audio.unlock(); if (UI.Net && UI.Net.voiceKick) UI.Net.voiceKick(); };
+    /* where the system lets a page hold the screen sideways (an installed app on Android; iPhones refuse today), ask once */
+    const land = () => { if (UI._olock) return; UI._olock = true; try { const so = g.screen && g.screen.orientation; if (so && so.lock) { const p = so.lock('landscape'); if (p && p.catch) p.catch(() => {}); } } catch (e) { /* not offered */ } };
+    const unlock = () => { if (TT.Audio) TT.Audio.unlock(); if (UI.Net && UI.Net.voiceKick) UI.Net.voiceKick(); land(); };
     for (const ev of ['pointerdown', 'pointerup', 'touchend', 'mousedown', 'click', 'keydown']) document.addEventListener(ev, unlock, { capture: true, passive: true });
     /* going to the background: sound stops, and the match is saved because the system may close the page without notice */
     const keep = () => { try { if (UI.Game && UI.Game.running && UI.Game.save) UI.Game.save(); } catch (e) { /* ignore */ } };
