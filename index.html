@@ -13,9 +13,9 @@
 <script>/* the manifest is for Android and other browsers; an iPhone or iPad is kept on the one long-standing path, the
    apple-touch-icon below: a plain 180 px opaque PNG under its usual name, beside the page */
 (function () { var n = navigator, apple = /iP(hone|ad|od)/.test(n.userAgent) || (n.platform === "MacIntel" && n.maxTouchPoints > 1); if (apple) return;
-  var l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest?v=8bd83d0780"; document.head.appendChild(l); })();</script>
+  var l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest?v=6788139fb9"; document.head.appendChild(l); })();</script>
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=8bd83d0780">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png?v=6788139fb9">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=Noto+Serif+JP:wght@500;700&display=swap">
 <style>
 :root{color-scheme:dark}body{margin:0;font:14px system-ui}img{max-width:100%}[hidden]{display:none!important}
@@ -848,7 +848,7 @@ i.w,.w{color:var(--bon);font-style:normal}
 <div id="modal" hidden></div>
 <div id="toast" hidden></div>
 </div>
-<script>window.TT_APP = '8bd83d0780';</script>
+<script>window.TT_APP = '6788139fb9';</script>
 <script>
 /* ==== core.js ==== */
 /* Triad Tactics v2 — core: namespace, constants, rng, dice, small math */
@@ -13162,7 +13162,10 @@ i.w,.w{color:var(--bon);font-style:normal}
   if (g.addEventListener) g.addEventListener('beforeinstallprompt', e => { e.preventDefault(); Sc.installEvt = e; });
   Sc.install = function () {
     if (Sc.installEvt) { const ev = Sc.installEvt; Sc.installEvt = null; try { ev.prompt(); } catch (e) { /* ignore */ } return; }
-    UI.dialog('ホーム画面に追加', '<p><b>iPhone / iPad</b>：Safariの共有ボタン（四角から矢印が出ている印。見当たらなければ「…」の中）を押し、「ホーム画面に追加」を選びます。追加の画面でアイコンが文字になっているときは、設定 → アプリ → Safari → 詳細 → Webサイトデータ でこのサイトのデータを消してから、開き直して追加してください。</p><p><b>Android</b>：ブラウザーのメニューから「アプリをインストール」または「ホーム画面に追加」を選びます。</p><p class="dim">追加したアイコンから開くと全画面になり、2回目以降は電波がなくても起動します。編成や設定はこの端末の中に保存されます。</p>', null, { cls: 'narrow' });
+    const n = navigator, apple = /iP(hone|ad|od)/.test(n.userAgent) || (n.platform === 'MacIntel' && n.maxTouchPoints > 1);
+    /* iPhones add the game from a small page of its own (add.html): there the icon is taken reliably */
+    UI.dialog('ホーム画面に追加', '<p><b>iPhone / iPad</b>：「追加用のページを開く」を押し、開いたページで Safari の共有ボタン（四角から矢印が出ている印。見当たらなければ「…」の中）→「ホーム画面に追加」を選びます。追加の画面の左上が金のひし形のアイコンになっていれば「追加」を押してください。</p><p><b>Android</b>：ブラウザーのメニューから「アプリをインストール」または「ホーム画面に追加」を選びます。</p><p class="dim">追加したアイコンから開くと全画面になり、2回目以降は電波がなくても起動します。編成や設定はこの端末の中に保存されます。</p>',
+      apple ? [{ label: '閉じる', cls: 'ghost' }, { label: '追加用のページを開く', cls: 'primary', fn: () => { location.href = 'add.html'; } }] : null, { cls: 'narrow' });
   };
   /* the player's display name (shown to opponents) */
   Sc.askName = function (done, first) {
